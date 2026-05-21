@@ -1,0 +1,300 @@
+Chiffre d'affaires total par pays (top 10)
+
+
+campaigniq=#  SELECT country, COUNT (DISTINCT invoice) AS nb_factures, COUNT (DISTINCT customer_id) AS nb_clients, ROUND(SUM(total_price)::numeric,2) AS ca_total
+campaigniq-# FROM retail GROUP BY country ORDER BY ca_total DESC LIMIT 10;
+    country     | nb_factures | nb_clients |  ca_total
+----------------+-------------+------------+-------------
+ United Kingdom |       33541 |       5350 | 14723147.50
+ EIRE           |         567 |          5 |   621631.11
+ Netherlands    |         228 |         22 |   554232.34
+ Germany        |         789 |        107 |   431262.46
+ France         |         614 |         95 |   355257.47
+ Australia      |          95 |         15 |   169968.11
+ Spain          |         154 |         41 |   109178.53
+ Switzerland    |          90 |         22 |   100365.34
+ Sweden         |         104 |         19 |    91549.72
+ Denmark        |          43 |         12 |    69862.19
+(10 lignes)
+
+
+
+Revenus par mois
+
+
+campaigniq=# SELECT DATE_TRUNC('month', invoice_date) AS mois, ROUND(SUM(total_price)::numeric, 2) AS ca_mensuel, COUNT(DISTINCT customer_id) AS clients_actifs
+campaigniq-# FROM retail GROUP BY DATE_TRUNC('month', invoice_date)
+campaigniq-# ORDER BY mois;
+        mois         | ca_mensuel | clients_actifs
+---------------------+------------+----------------
+ 2009-12-01 00:00:00 |  686654.16 |            955
+ 2010-01-01 00:00:00 |  557319.06 |            720
+ 2010-02-01 00:00:00 |  506371.06 |            772
+ 2010-03-01 00:00:00 |  699608.99 |           1057
+ 2010-04-01 00:00:00 |  594609.19 |            942
+ 2010-05-01 00:00:00 |  599985.79 |            966
+ 2010-06-01 00:00:00 |  639066.58 |           1041
+ 2010-07-01 00:00:00 |  591636.74 |            928
+ 2010-08-01 00:00:00 |  604242.65 |            911
+ 2010-09-01 00:00:00 |  831615.00 |           1145
+ 2010-10-01 00:00:00 | 1036680.00 |           1497
+ 2010-11-01 00:00:00 | 1172336.04 |           1607
+ 2010-12-01 00:00:00 |  884591.89 |            885
+ 2011-01-01 00:00:00 |  569445.04 |            741
+ 2011-02-01 00:00:00 |  447137.35 |            758
+ 2011-03-01 00:00:00 |  595500.76 |            974
+ 2011-04-01 00:00:00 |  469200.36 |            856
+ 2011-05-01 00:00:00 |  678594.56 |           1056
+ 2011-06-01 00:00:00 |  661213.69 |            991
+ 2011-07-01 00:00:00 |  600091.01 |            949
+ 2011-08-01 00:00:00 |  645343.90 |            935
+ 2011-09-01 00:00:00 |  952838.38 |           1266
+ 2011-10-01 00:00:00 | 1039318.79 |           1364
+ 2011-11-01 00:00:00 | 1161817.38 |           1664
+ 2011-12-01 00:00:00 |  518210.79 |            615
+(25 lignes)
+
+
+
+top 10 produits par CA avec leur rang dans leur pays
+
+
+
+campaigniq=# WITH ca_produits AS (SELECT stock_code, description, country, ROUND(SUM(total_price)::numeric,2) AS ca_produit
+campaigniq(# FROM retail GROUP BY stock_code, description, country),
+campaigniq-# top_par_pays AS (SELECT *, ROW_NUMBER() OVER (PARTITION BY country ORDER BY ca_produit DESC) AS rang_dans_pays
+campaigniq(# FROM ca_produits)
+campaigniq-# SELECT country, stock_code, description, ca_produit, rang_dans_pays
+campaigniq-# FROM top_par_pays
+campaigniq-# WHERE rang_dans_pays <= 3
+campaigniq-# ORDER BY country, rang_dans_pays;
+       country        | stock_code |             description             | ca_produit | rang_dans_pays
+----------------------+------------+-------------------------------------+------------+----------------
+ Australia            | 23084      | RABBIT NIGHT LIGHT                  |    3375.84 |              1
+ Australia            | 22423      | REGENCY CAKESTAND 3 TIER            |    2930.70 |              2
+ Australia            | 21731      | RED TOADSTOOL LED NIGHT LIGHT       |    2464.20 |              3
+ Austria              | POST       | POSTAGE                             |    3056.00 |              1
+ Austria              | 15056N     | EDWARDIAN PARASOL NATURAL           |     654.00 |              2
+ Austria              | 20679      | EDWARDIAN PARASOL RED               |     582.60 |              3
+ Bahrain              | 23076      | ICE CREAM SUNDAE LIP GLOSS          |     120.00 |              1
+ Bahrain              | 22649      | STRAWBERRY FAIRY CAKE TEAPOT        |      79.20 |              2
+ Bahrain              | 23077      | DOUGHNUT LIP GLOSS                  |      75.00 |              3
+ Belgium              | POST       | POSTAGE                             |    6922.00 |              1
+ Belgium              | M          | Manual                              |    1508.65 |              2
+ Belgium              | 22326      | ROUND SNACK BOXES SET OF4 WOODLAND  |    1429.20 |              3
+ Brazil               | 22423      | REGENCY CAKESTAND 3 TIER            |     175.20 |              1
+ Brazil               | 22722      | SET OF 6 SPICE TINS PANTRY DESIGN   |      82.80 |              2
+ Brazil               | 21430      | SET/3 RED GINGHAM ROSE STORAGE BOX  |      81.36 |              3
+ Canada               | POST       | POSTAGE                             |     550.94 |              1
+ Canada               | 37370      | RETRO COFFEE MUGS ASSORTED          |     534.24 |              2
+ Canada               | 20727      | LUNCH BAG  BLACK SKULL.             |      82.50 |              3
+ Channel Islands      | 51008      | AFGHAN SLIPPER SOCK PAIR            |    1770.00 |              1
+ Channel Islands      | 85099B     | JUMBO BAG RED RETROSPOT             |     955.70 |              2
+ Channel Islands      | 22423      | REGENCY CAKESTAND 3 TIER            |     785.55 |              3
+ Cyprus               | 22423      | REGENCY CAKESTAND 3 TIER            |     949.65 |              1
+ Cyprus               | 85123A     | WHITE HANGING HEART T-LIGHT HOLDER  |     781.65 |              2
+ Cyprus               | 22827      | RUSTIC  SEVENTEEN DRAWER SIDEBOARD  |     580.00 |              3
+ Czech Republic       | 22326      | ROUND SNACK BOXES SET OF4 WOODLAND  |      70.80 |              1
+ Czech Republic       | 84347      | ROTATING SILVER ANGELS T-LIGHT HLDR |      61.20 |              2
+ Czech Republic       | 22231      | JIGSAW TREE WITH BIRDHOUSE          |      52.20 |              3
+ Denmark              | 85220      | SMALL FAIRY CAKE FRIDGE MAGNETS     |    6467.60 |              1
+ Denmark              | 37410      | BLACK AND WHITE PAISLEY FLOWER MUG  |    2516.40 |              2
+ Denmark              | POST       | POSTAGE                             |    1302.00 |              3
+ EIRE                 | M          | Manual                              |   19558.11 |              1
+ EIRE                 | 22423      | REGENCY CAKESTAND 3 TIER            |   15067.05 |              2
+ EIRE                 | C2         | CARRIAGE                            |    9125.00 |              3
+ European Community   | POST       | POSTAGE                             |     141.00 |              1
+ European Community   | 22843      | BISCUIT TIN VINTAGE GREEN           |      54.00 |              2
+ European Community   | 22842      | BISCUIT TIN VINTAGE RED             |      54.00 |              3
+ Finland              | POST       | POSTAGE                             |    4131.00 |              1
+ Finland              | 84997D     | CHILDRENS CUTLERY POLKADOT PINK     |    1819.20 |              2
+ Finland              | 84997C     | CHILDRENS CUTLERY POLKADOT BLUE     |    1187.40 |              3
+ France               | POST       | POSTAGE                             |   25030.00 |              1
+ France               | M          | Manual                              |   14513.07 |              2
+ France               | 23084      | RABBIT NIGHT LIGHT                  |    7234.24 |              3
+ Germany              | POST       | POSTAGE                             |   39231.20 |              1
+ Germany              | 22423      | REGENCY CAKESTAND 3 TIER            |   13599.90 |              2
+ Germany              | 22326      | ROUND SNACK BOXES SET OF4 WOODLAND  |    7867.30 |              3
+ Greece               | 85123A     | WHITE HANGING HEART T-LIGHT HOLDER  |     408.00 |              1
+ Greece               | POST       | POSTAGE                             |     385.00 |              2
+
+
+
+CA mensuel avec variation vs mois précédent (LAG)
+
+
+
+campaigniq=# WITH ca_mensuel AS (
+campaigniq(# SELECT DATE_TRUNC('month', invoice_date) AS mois, ROUND(SUM(total_price)::numeric,2) AS ca
+campaigniq(# FROM retail GROUP BY DATE_TRUNC('month', invoice_date))
+campaigniq-# SELECT mois, ca, LAG(ca) OVER (ORDER BY mois) AS ca_mois_precedent,
+campaigniq-# ROUND((ca-LAG(ca) OVER (ORDER BY mois)) / LAG(ca) OVER (ORDER BY mois)*100,1) AS variation_pct
+campaigniq-# FROM ca_mensuel
+campaigniq-# ORDER BY mois;
+        mois         |     ca     | ca_mois_precedent | variation_pct
+---------------------+------------+-------------------+---------------
+ 2009-12-01 00:00:00 |  686654.16 |                   |
+ 2010-01-01 00:00:00 |  557319.06 |         686654.16 |         -18.8
+ 2010-02-01 00:00:00 |  506371.06 |         557319.06 |          -9.1
+ 2010-03-01 00:00:00 |  699608.99 |         506371.06 |          38.2
+ 2010-04-01 00:00:00 |  594609.19 |         699608.99 |         -15.0
+ 2010-05-01 00:00:00 |  599985.79 |         594609.19 |           0.9
+ 2010-06-01 00:00:00 |  639066.58 |         599985.79 |           6.5
+ 2010-07-01 00:00:00 |  591636.74 |         639066.58 |          -7.4
+ 2010-08-01 00:00:00 |  604242.65 |         591636.74 |           2.1
+ 2010-09-01 00:00:00 |  831615.00 |         604242.65 |          37.6
+ 2010-10-01 00:00:00 | 1036680.00 |         831615.00 |          24.7
+ 2010-11-01 00:00:00 | 1172336.04 |        1036680.00 |          13.1
+ 2010-12-01 00:00:00 |  884591.89 |        1172336.04 |         -24.5
+ 2011-01-01 00:00:00 |  569445.04 |         884591.89 |         -35.6
+ 2011-02-01 00:00:00 |  447137.35 |         569445.04 |         -21.5
+ 2011-03-01 00:00:00 |  595500.76 |         447137.35 |          33.2
+ 2011-04-01 00:00:00 |  469200.36 |         595500.76 |         -21.2
+ 2011-05-01 00:00:00 |  678594.56 |         469200.36 |          44.6
+ 2011-06-01 00:00:00 |  661213.69 |         678594.56 |          -2.6
+ 2011-07-01 00:00:00 |  600091.01 |         661213.69 |          -9.2
+ 2011-08-01 00:00:00 |  645343.90 |         600091.01 |           7.5
+ 2011-09-01 00:00:00 |  952838.38 |         645343.90 |          47.6
+ 2011-10-01 00:00:00 | 1039318.79 |         952838.38 |           9.1
+ 2011-11-01 00:00:00 | 1161817.38 |        1039318.79 |          11.8
+ 2011-12-01 00:00:00 |  518210.79 |        1161817.38 |         -55.4
+(25 lignes)
+
+
+
+Somme cumulée du CA sur l'année 2011
+
+
+campaigniq=# WITH ca_mensuel AS (
+campaigniq(# SELECT DATE_TRUNC('month', invoice_date) AS mois, ROUND(SUM(total_price)::numeric,2) AS ca
+campaigniq(# FROM retail
+campaigniq(# WHERE EXTRACT(YEAR FROM invoice_date)=2011
+campaigniq(# GROUP BY DATE_TRUNC('month', invoice_date))
+campaigniq-# SELECT mois, ca, SUM(ca) OVER(ORDER BY mois) AS ca_cumule
+campaigniq-# FROM ca_mensuel
+campaigniq-# ORDER BY mois;
+        mois         |     ca     | ca_cumule
+---------------------+------------+------------
+ 2011-01-01 00:00:00 |  569445.04 |  569445.04
+ 2011-02-01 00:00:00 |  447137.35 | 1016582.39
+ 2011-03-01 00:00:00 |  595500.76 | 1612083.15
+ 2011-04-01 00:00:00 |  469200.36 | 2081283.51
+ 2011-05-01 00:00:00 |  678594.56 | 2759878.07
+ 2011-06-01 00:00:00 |  661213.69 | 3421091.76
+ 2011-07-01 00:00:00 |  600091.01 | 4021182.77
+ 2011-08-01 00:00:00 |  645343.90 | 4666526.67
+ 2011-09-01 00:00:00 |  952838.38 | 5619365.05
+ 2011-10-01 00:00:00 | 1039318.79 | 6658683.84
+ 2011-11-01 00:00:00 | 1161817.38 | 7820501.22
+ 2011-12-01 00:00:00 |  518210.79 | 8338712.01
+(12 lignes)
+
+
+
+Top 5 clients par pays
+
+
+campaigniq=# WITH ca_clients AS(
+campaigniq(# SELECT customer_id, country, ROUND(SUM(total_price)::numeric,2) AS ca_client
+campaigniq(# FROM retail
+campaigniq(# GROUP BY customer_id, country),
+campaigniq-# clients_ranges AS (SELECT*, ROW_NUMBER() OVER( PARTITION BY country ORDER BY ca_client DESC) AS rang
+campaigniq(# FROM ca_clients)
+campaigniq-# SELECT customer_id, country, ca_client, rang
+campaigniq-# FROM clients_ranges
+campaigniq-# WHERE rang <= 5
+campaigniq-# ORDER BY country, rang;
+ customer_id |       country        | ca_client | rang
+-------------+----------------------+-----------+------
+       12415 | Australia            | 144458.37 |    1
+       12431 | Australia            |   8125.54 |    2
+       12388 | Australia            |   3901.11 |    3
+       12424 | Australia            |   3340.03 |    4
+       12422 | Australia            |   2808.10 |    5
+       12360 | Austria              |   4252.89 |    1
+       12358 | Austria              |   3887.07 |    2
+       12865 | Austria              |   3323.47 |    3
+       12374 | Austria              |   2989.22 |    4
+       12369 | Austria              |   1791.15 |    5
+       12355 | Bahrain              |    947.61 |    1
+       12353 | Bahrain              |    406.76 |    2
+       12380 | Belgium              |   9676.30 |    1
+       12417 | Belgium              |   6178.55 |    2
+       12362 | Belgium              |   5356.23 |    3
+       12395 | Belgium              |   5067.27 |    4
+       12408 | Belgium              |   4340.77 |    5
+       12769 | Brazil               |   1143.60 |    1
+       12751 | Brazil               |    268.27 |    2
+       17444 | Canada               |   2940.04 |    1
+       15390 | Canada               |   1216.66 |    2
+       17443 | Canada               |    534.24 |    3
+       15388 | Canada               |    140.54 |    4
+       17844 | Canada               |     51.56 |    5
+       14936 | Channel Islands      |  12410.81 |    1
+       14442 | Channel Islands      |   5367.02 |    2
+       14930 | Channel Islands      |   5246.63 |    3
+       14566 | Channel Islands      |   4092.00 |    4
+       14934 | Channel Islands      |   3503.50 |    5
+       12359 | Cyprus               |   8935.94 |    1
+       12455 | Cyprus               |   5111.99 |    2
+       12370 | Cyprus               |   3268.49 |    3
+       12391 | Cyprus               |   2773.42 |    4
+       12439 | Cyprus               |   1158.18 |    5
+       12781 | Czech Republic       |    826.74 |    1
+       13902 | Denmark              |  34095.26 |    1
+       12435 | Denmark              |  13925.93 |    2
+       12429 | Denmark              |   7047.93 |    3
+       12406 | Denmark              |   6390.36 |    4
+       12412 | Denmark              |   2596.93 |    5
+       14156 | EIRE                 | 313946.37 |    1
+       14911 | EIRE                 | 295972.63 |    2
+       14016 | EIRE                 |  11403.41 |    3
+       12745 | EIRE                 |    201.56 |    4
+       16047 | EIRE                 |    107.14 |    5
+       15108 | European Community   |   1300.25 |    1
+       12428 | Finland              |   7956.46 |    1
+
+
+
+
+Produits achetés par plus de 100 clients différents
+
+
+
+campaigniq=# SELECT stock_code, MAX(description) AS description,
+campaigniq-# COUNT (DISTINCT customer_id) AS nb_client,
+campaigniq-# ROUND (SUM(total_price)::numeric,2) AS ca_total,
+campaigniq-# SUM(quantity) AS qte_vendue
+campaigniq-# FROM retail
+campaigniq-# GROUP BY stock_code
+campaigniq-# HAVING COUNT(DISTINCT customer_id) >100
+campaigniq-# ORDER BY nb_client DESC LIMIT 20;
+ stock_code |            description             | nb_client | ca_total  | qte_vendue
+------------+------------------------------------+-----------+-----------+------------
+ 85123A     | WHITE HANGING HEART T-LIGHT HOLDER |      1490 | 252227.81 |      93697
+ 22423      | REGENCY CAKESTAND 3 TIER           |      1314 | 286486.30 |      24899
+ 22138      | BAKING SET 9 PIECE RETROSPOT       |      1137 |  43155.06 |       9052
+ 21212      | PACK OF 72 RETROSPOT CAKE CASES    |      1115 |  44067.34 |      91263
+ 84879      | ASSORTED COLOUR BIRD ORNAMENT      |      1010 | 127074.17 |      79913
+ 85099B     | RED RETROSPOT JUMBO BAG            |       978 | 170616.68 |      94983
+ 22139      | RETROSPOT TEA SET CERAMIC 11 PC    |       941 |  47787.60 |      10107
+ 22086      | PAPER CHAIN KIT 50'S CHRISTMAS     |       896 |  79594.33 |      29477
+ 47566      | PARTY BUNTING                      |       894 | 103880.23 |      23607
+ 22469      | HEART OF WICKER SMALL              |       886 |  45020.95 |      27182
+ 22457      | NATURAL SLATE HEART CHALKBOARD     |       874 |  41203.92 |      14508
+ 20725      | LUNCH BAG RED SPOTTY               |       845 |  60271.70 |      38314
+ 22470      | HEART OF WICKER LARGE              |       827 |  52157.68 |      17866
+ 84991      | 60 TEATIME FAIRY CAKE CASES        |       822 |  26121.57 |      53495
+ 21034      | REX CASH+CARRY JUMBO SHOPPER       |       800 |   3914.00 |       4120
+ 21080      | SET/20 RED SPOTTY PAPER NAPKINS    |       798 |  23091.00 |      30214
+ 21790      | VINTAGE SNAP CARDS                 |       793 |  20458.79 |      25765
+ 22382      | LUNCHBAG SPACEBOY DESIGN           |       790 |  31485.95 |      19679
+ 21977      | PACK OF 60 PINK PAISLEY CAKE CASES |       767 |  26733.45 |      55270
+ 21733      | RED HANGING HEART T-LIGHT HOLDER   |       744 |  50010.85 |      17643
+(20 lignes)
+
+
+
+
+
+

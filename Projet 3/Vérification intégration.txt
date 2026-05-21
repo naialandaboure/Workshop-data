@@ -1,0 +1,74 @@
+postgres=# \c campaigniq
+Vous êtes maintenant connecté à la base de données « campaigniq » en tant qu'utilisateur « postgres ».
+campaigniq=# \dt
+              Liste des relations
+ Schéma |      Nom      | Type  | Propriétaire
+--------+---------------+-------+--------------
+ public | campaigns     | table | postgres
+ public | quotes        | table | postgres
+ public | rapport_hebdo | table | postgres
+(3 lignes)
+
+
+campaigniq=# \dt
+              Liste des relations
+ Schéma |      Nom      | Type  | Propriétaire
+--------+---------------+-------+--------------
+ public | campaigns     | table | postgres
+ public | quotes        | table | postgres
+ public | rapport_hebdo | table | postgres
+ public | retail        | table | postgres
+(4 lignes)
+
+
+campaigniq=# SELECT * FROM retail
+campaigniq-# ;
+ invoice |  stock_code  |             description             | quantity |    invoice_date     | unit_price | customer_id |       country        | total_price
+---------+--------------+-------------------------------------+----------+---------------------+------------+-------------+----------------------+-------------
+  489434 | 85048        | 15CM CHRISTMAS GLASS BALL 20 LIGHTS |       12 | 2009-12-01 07:45:00 |       6.95 |       13085 | United Kingdom       |        83.4
+  489434 | 79323P       | PINK CHERRY LIGHTS                  |       12 | 2009-12-01 07:45:00 |       6.75 |       13085 | United Kingdom       |          81
+  489434 | 79323W       |  WHITE CHERRY LIGHTS                |       12 | 2009-12-01 07:45:00 |       6.75 |       13085 | United Kingdom       |          81
+  489434 | 22041        | RECORD FRAME 7" SINGLE SIZE         |       48 | 2009-12-01 07:45:00 |        2.1 |       13085 | United Kingdom       |       100.8
+  489434 | 21232        | STRAWBERRY CERAMIC TRINKET BOX      |       24 | 2009-12-01 07:45:00 |       1.25 |       13085 | United Kingdom       |          30
+  489434 | 22064        | PINK DOUGHNUT TRINKET POT           |       24 | 2009-12-01 07:45:00 |       1.65 |       13085 | United Kingdom       |        39.6
+  489434 | 21871        | SAVE THE PLANET MUG                 |       24 | 2009-12-01 07:45:00 |       1.25 |       13085 | United Kingdom       |          30
+  489434 | 21523        | FANCY FONT HOME SWEET HOME DOORMAT  |       10 | 2009-12-01 07:45:00 |       5.95 |       13085 | United Kingdom       |        59.5
+  489435 | 22350        | CAT BOWL                            |       12 | 2009-12-01 07:46:00 |       2.55 |       13085 | United Kingdom       |        30.6
+  489435 | 22349        | DOG BOWL , CHASING BALL DESIGN      |       12 | 2009-12-01 07:46:00 |       3.75 |       13085 | United Kingdom       |          45
+  489435 | 22195        | HEART MEASURING SPOONS LARGE        |       24 | 2009-12-01 07:46:00 |       1.65 |       13085 | United Kingdom       |        39.6
+  489435 | 22353        | LUNCHBOX WITH CUTLERY FAIRY CAKES   |       12 | 2009-12-01 07:46:00 |       2.55 |       13085 | United Kingdom       |        30.6
+  489436 | 48173C       | DOOR MAT BLACK FLOCK                |       10 | 2009-12-01 09:06:00 |       5.95 |       13078 | United Kingdom       |        59.5
+  489436 | 21755        | LOVE BUILDING BLOCK WORD            |       18 | 2009-12-01 09:06:00 |       5.45 |       13078 | United Kingdom       |        98.1
+  489436 | 21754        | HOME BUILDING BLOCK WORD            |        3 | 2009-12-01 09:06:00 |       5.95 |       13078 | United Kingdom       |       17.85
+  489436 | 84879        | ASSORTED COLOUR BIRD ORNAMENT       |       16 | 2009-12-01 09:06:00 |       1.69 |       13078 | United Kingdom       |       27.04
+  489436 | 22119        |  PEACE WOODEN BLOCK LETTERS         |        3 | 2009-12-01 09:06:00 |       6.95 |       13078 | United Kingdom       |       20.85
+  489436 | 22142        | CHRISTMAS CRAFT WHITE FAIRY         |       12 | 2009-12-01 09:06:00 |       1.45 |
+
+
+campaigniq=# SELECT COUNT(*) FROM retail
+campaigniq-# ;
+ count
+--------
+ 805549
+(1 ligne)
+
+
+campaigniq=# SELECT MIN (invoice_date), MAX (invoice_date) FROM retail;
+         min         |         max
+---------------------+---------------------
+ 2009-12-01 07:45:00 | 2011-12-09 12:50:00
+(1 ligne)
+
+
+campaigniq=# SELECT COUNT (DISTINCT customer_id) FROM retail;
+ count
+-------
+  5878
+(1 ligne)
+
+
+campaigniq=# SELECT COUNT (DISTINCT country) FROM retail;
+ count
+-------
+    41
+(1 ligne)
