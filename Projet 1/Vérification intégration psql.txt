@@ -1,0 +1,18 @@
+campaigniq=# SELECT COUNT (*) FROM campaigns;
+ count
+-------
+  4790
+(1 ligne)
+
+
+campaigniq=# SELECT channel, COUNT(*), ROUND(AVG(roas)::numeric,2) AS roas_moyen
+campaigniq-# FROM campaigns
+campaigniq-# GROUP BY channel
+campaigniq-# ORDER BY roas_moyen DESC;
+ channel | count | roas_moyen
+---------+-------+------------
+ search  |  1206 |      13.52
+ email   |  1185 |      11.67
+ social  |  1166 |       2.63
+ display |  1233 |       0.30
+(4 lignes)
