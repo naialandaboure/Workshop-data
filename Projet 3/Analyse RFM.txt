@@ -1,0 +1,105 @@
+Etape 1 : date de référence = dernier jour du dataset_________________________________________________________________________________
+
+
+campaigniq=# WITH date_ref AS (SELECT MAX(invoice_date)::date AS ref FROM retail),
+campaigniq-# rfm_raw AS (SELECT
+campaigniq(# r.customer_id,
+campaigniq(# (d.ref - MAX(r.invoice_date)::date) AS recence_jours,
+campaigniq(# COUNT(DISTINCT r.invoice) AS frequence,
+campaigniq(# ROUND(SUM(r.total_price)::numeric,2) AS montant
+campaigniq(# FROM retail r
+campaigniq(# CROSS JOIN date_ref d
+campaigniq(# GROUP BY r.customer_id, d.ref)
+campaigniq-# SELECT * FROM rfm_raw
+campaigniq-# ORDER BY montant DESC LIMIT 10;
+ customer_id | recence_jours | frequence |  montant
+-------------+---------------+-----------+-----------
+       18102 |             0 |       145 | 608821.65
+       14646 |             1 |       151 | 528602.52
+       14156 |             9 |       156 | 313946.37
+       14911 |             1 |       398 | 295972.63
+       17450 |             8 |        51 | 246973.09
+       13694 |             3 |       143 | 196482.81
+       17511 |             2 |        60 | 175603.55
+       16446 |             0 |         2 | 168472.50
+       16684 |             4 |        55 | 147142.77
+       12415 |            24 |        28 | 144458.37
+(10 lignes)
+
+
+campaigniq=# SELECT MAX(invoice_date)::date AS ref FROM retail;
+    ref
+------------
+ 2011-12-09
+(1 ligne)
+
+
+
+Etape 2 : Calcul RFM complet avec scores_________________________________________________________________________________________________
+
+
+
+campaigniq=# WITH date_ref AS (SELECT MAX(invoice_date)::date AS ref FROM retail),
+campaigniq-# rfm_raw AS (SELECT
+campaigniq(# customer_id,
+campaigniq(# (MAX (d.ref) - MAX (invoice_date)::date) AS recence_jours,
+campaigniq(# COUNT(DISTINCT invoice) AS frequence,
+campaigniq(# ROUND(SUM(total_price)::numeric,2) AS montant
+campaigniq(# FROM retail, date_ref d GROUP BY customer_id),
+campaigniq-# rfm_scores AS (SELECT *,
+campaigniq(# NTILE(5) OVER (ORDER BY recence_jours DESC) AS score_r,
+campaigniq(# NTILE(5) OVER (ORDER BY frequence ASC) AS score_f,
+campaigniq(# NTILE(5) OVER (ORDER BY montant ASC) AS score_m
+campaigniq(# FROM rfm_raw),
+campaigniq-# rfm_segments AS (SELECT *, (score_r::text || score_f::text || score_m::text) AS rfm_code,
+campaigniq(# CASE
+campaigniq(# WHEN score_r >= 4 AND score_f >= 4 AND score_m >= 4 THEN 'Champion'
+campaigniq(# WHEN score_r >= 3 AND score_f >= 3 THEN 'Client fidèle'
+campaigniq(# WHEN score_r >= 4 AND score_f <= 2 THEN 'Client récent'
+campaigniq(# WHEN score_r <= 2 AND score_f >= 4 THEN 'A risque'
+campaigniq(# WHEN score_r = 1 THEN 'Client perdu'
+campaigniq(# ELSE 'Client ordinaire' END AS segment FROM rfm_scores)
+campaigniq-# SELECT segment,
+campaigniq-# COUNT (*) AS nb_clients,
+campaigniq-# ROUND(AVG(recence_jours)) AS recence_moy,
+campaigniq-# ROUND(AVG(frequence)) AS frequence_moy,
+campaigniq-# ROUND(AVG(montant):: numeric,0) AS montant_moy
+campaigniq-# FROM rfm_segments GROUP BY segment ORDER BY nb_clients DESC;
+     segment      | nb_clients | recence_moy | frequence_moy | montant_moy
+------------------+------------+-------------+---------------+-------------
+ Client fidèle    |       1394 |          70 |             5 |        1963
+ Client ordinaire |       1331 |         251 |             2 |         618
+ Champion         |       1296 |          19 |            17 |        9343
+ Client perdu     |       1080 |         549 |             1 |         528
+ Client récent    |        430 |          28 |             1 |         879
+ A risque         |        347 |         341 |             8 |        3249
+(6 lignes)
+
+
+Etape 3 :Créer une vue permanente pour Power BI__________________________________________________________________________________
+
+
+
+campaigniq=# CREATE OR REPLACE VIEW rfm_view AS
+campaigniq-# WITH date_ref AS (SELECT MAX(invoice_date)::date AS ref FROM retail),
+campaigniq-# rfm_raw AS(SELECT
+campaigniq(# customer_id,
+campaigniq(# (MAX(d.ref) - MAX(invoice_date)::date) AS recence_jours,
+campaigniq(# COUNT(DISTINCT invoice) AS frequence,
+campaigniq(# ROUND(SUM(total_price)::numeric,2) AS montant,
+campaigniq(# MAX(country) AS country
+campaigniq(# FROM retail, date_ref d GROUP BY customer_id),
+campaigniq-# rfm_scores AS (SELECT *,
+campaigniq(# NTILE(5) OVER (ORDER BY recence_jours DESC) AS score_r,
+campaigniq(# NTILE(5) OVER (ORDER BY frequence ASC) AS score_f,
+campaigniq(# NTILE(5) OVER (ORDER BY montant ASC) AS score_m
+campaigniq(# FROM rfm_raw)
+campaigniq-# SELECT *, (score_r::text || score_f::text || score_m::text) AS rfm_code,
+campaigniq-# CASE
+campaigniq-# WHEN score_r >= 4 AND score_f >= 4 AND score_m >= 4 THEN 'Champion'
+campaigniq-# WHEN score_r >= 3 AND score_f >= 3 THEN 'Client fidèle'
+campaigniq-# WHEN score_r >= 4 AND score_f <= 2 THEN 'Client récent'
+campaigniq(# WHEN score_r <= 2 AND score_f >= 4 THEN 'A risque'
+campaigniq-# WHEN score_r = 1 THEN 'Client perdu'
+campaigniq-# ELSE 'Client ordinaire' END AS segment FROM rfm_scores;
+CREATE VIEW
