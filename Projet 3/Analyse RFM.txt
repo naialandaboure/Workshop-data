@@ -79,7 +79,6 @@ campaigniq-# FROM rfm_segments GROUP BY segment ORDER BY nb_clients DESC;
 Etape 3 :Créer une vue permanente pour Power BI__________________________________________________________________________________
 
 
-
 campaigniq=# CREATE OR REPLACE VIEW rfm_view AS
 campaigniq-# WITH date_ref AS (SELECT MAX(invoice_date)::date AS ref FROM retail),
 campaigniq-# rfm_raw AS(SELECT
